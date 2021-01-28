@@ -1,0 +1,53 @@
+#row-grid {
+  display: grid;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  grid-gap: 10px;
+  margin-bottom:10px;
+}
+#row-grid > div {
+  background-color: #b7a57a;
+  color: white;
+  padding: 10px;
+}
+#class-grid {
+  display: grid;
+	grid-auto-columns: 1fr;
+	grid-auto-flow: row;
+	grid-gap: 5px;
+}
+#class-grid > div {
+	text-align:center;
+  background: #4b2e83;
+  padding: 10px;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 30px;
+}
+#inner-grid {
+  display: grid;
+	grid-auto-columns: 1fr;
+	grid-auto-flow: column;
+	grid-gap: 5px;
+}
+#inner-grid > div {
+	text-align:center;
+	background: #4b2e83;
+	padding: 10px;
+	font-family: 'Open Sans', sans-serif;
+	font-size: 25px;
+	font-weight:600;
+}
+#title-grid {
+  display: grid;
+	grid-auto-columns: 1fr;
+	grid-auto-flow: row;
+	grid-gap: 5px;
+}
+#room-name  {
+	text-align:center;
+  background-color: #4b2e83!important;
+  padding: 10px;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 30px;
+  font-weight: 800;
+}
