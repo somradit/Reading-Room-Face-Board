@@ -6,11 +6,16 @@
 <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
 <?php
 //Room Variables
-include('roomVariables.php');
+global $firstRow;
+global $secondRow;
+global $coordinatorName;
+global $coordinatorPicture;
+global $calendars;
+
 //Get Residents on Leave
 $residentLeaveShifts = array("ADMIN","CONF","VACATION","SICK");
 $residentLeaveShiftsList = implode(",",$residentLeaveShifts);
-$residentLeaveURL = buildQuery("ADMIN",array("uwradcall"));
+$residentLeaveURL = buildQuery($residentLeaveShifts,array("uwradcall"));
 $residentLeaveData = queryAmion($residentLeaveURL);
 $residentsOnLeave = getShiftNetids($residentLeaveShifts, $residentLeaveData);
 
@@ -22,13 +27,14 @@ $shiftList = (getRowShiftNames($firstRow).",".getRowShiftNames($secondRow));
 $amionURL = buildQuery($shiftList, $calendars);
 
 $amionData = queryAmion($amionURL);
-
+echo "<div id='container'>";
 //Output the header row
 headerRow($pageTitle);
 //Output the two people rows
-makeRow($firstRow, True);
+makeRow($firstRow, $coordinator);
 makeRow($secondRow);
-
+footerRow();
+echo "</div>";
 
 //Implode the shift arrays
 function getShiftNames($array){
@@ -90,7 +96,6 @@ function getShiftNetids($shiftsArray, $amionData){
 			$netids[] = $amionData[$personOnShift][2];
 		}
 	}
-	
 	return $netids;
 }
 
@@ -106,11 +111,9 @@ function makeOuterGridTemplate($items){
 function createPersonBox($classifcation, $people){
 	global $residentsOnLeave;
 	
-	
 	//Get Pictures
 	$response = file_get_contents('http://rad.washington.edu/wp-json/people/v1/all');
 	$response = json_decode($response);
-
 	
 	$personBox = "";
 	$personBox .= "<div id='class-grid'>";
@@ -120,29 +123,32 @@ function createPersonBox($classifcation, $people){
 	//Array to track if any of the shifts were populated
 	$keys = array();
 	foreach ($people as &$person){
-		
 		//Don't display residents on leave
 		if(!in_array($person, $residentsOnLeave)){
 			$key = array_search($person, array_column($response, 'post_title'));
-			$keys[] = $key;
+			
 			if($key){
+				$keys[] = $key;
 				$pictureSrc = $response[$key]->picure;
-				$firstname = $response[$key]->first_name;
-				$lastname = $response[$key]->last_name;
-				$suffix = $response[$key]->suffix;
-				$fullname = $firstname.' '.$lastname.', '.$suffix;
-				
-				$personBox .= "<div class='flex-item'>";
-				$personBox .= "<div class='picture'><img height='300px' src='".$pictureSrc."'></div>";
-				$personBox .= "<div class='name'>".$fullname."</div>";
-				$personBox .= "</div>";
+				if(!is_null($pictureSrc)){
+					$firstname = $response[$key]->first_name;
+					$lastname = $response[$key]->last_name;
+					$suffix = $response[$key]->suffix;
+					$fullname = $firstname.' '.$lastname.', '.$suffix;
+					
+					$personBox .= "<div class='flex-item'>";
+					$personBox .= "<figure class='picture'><img src='".$pictureSrc."'></figure>";
+					$personBox .= "<div class='name'>".$fullname."</div>";
+					$personBox .= "</div>";
+				}
 			}
 		}
 	}
 	$personBox .= "</div>";
 	$personBox .= "</div>";
 	//If there are people scheduled in this group today return the box for that group, else return null
-	if($keys){
+	//print_r($keys);
+	if(!empty($keys)){
 		return $personBox;
 	};
 	return null;
@@ -155,10 +161,10 @@ function coordinatorBox(){
 	
 	$personBox = "";
 	$personBox .= "<div id='class-grid'>";
-	$personBox .= "<div class='header'>Reading Room Coordinator</div>";
+	$personBox .= "<div class='header' style='font-size:2.5vh'>Reading Room Coordinator</div>";
 	$personBox .= "<div id='inner-grid'>";
 	$personBox .= "<div class='flex-item'>";
-	$personBox .= "<div class='picture'><img height='300px' src='".$coordinatorPicture."'></div>";
+	$personBox .= "<figure class='picture'><img src='".$coordinatorPicture."'></figure>";
 	$personBox .= "<div class='name'>".$coordinatorName."</div>";
 	$personBox .= "</div>";
 	$personBox .= "</div>";
@@ -177,13 +183,15 @@ function makeRow($row, $coordinator=False){
 	foreach($groups as &$group){
 		$netids = getShiftNetids($group, $amionData);
 		$netids = array_diff($netids, $residentsOnLeave);
+		$personBox = null;
 		$personBox = createPersonBox($headers[$i], $netids);
 		if($personBox){
 			$innerrow .= $personBox;
-			$counts[]  = count($netids);
+			$counts[]  = substr_count($personBox, "img");
 		}
 		$i++;
 	}
+	
 	$gridTemplate = makeOuterGridTemplate($counts);
 	if($coordinator){
 		$gridTemplate .= " 1fr";
@@ -194,13 +202,20 @@ function makeRow($row, $coordinator=False){
 		$rowOut .= coordinatorBox();
 	}
 	$rowOut .= "</div>";
-	echo $rowOut;
+	if(strpos($rowOut,'img') !== false){
+		echo $rowOut;
+	}
+	else{
+		return null;
+	}
 }
 
 //Header Row
 function headerRow($pageTitle){
-	echo("<div id='row-grid'><div id='room-name'>".$pageTitle." - ".date("l\, F jS\, Y")."</div></div>");
+	echo("<div id='header'><div id='room-name'>".$pageTitle." - ".date("l\, F jS\, Y")."</div></div>");
 }
-?>
-</body>
-</html>
+
+//Footer Row
+function footerRow(){
+	echo("<div id='footer'><div id='footer-info'>Questions or Issues? Contact somradit@uw.edu</div></div>");
+}
